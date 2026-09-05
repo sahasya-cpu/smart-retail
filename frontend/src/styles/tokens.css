@@ -267,3 +267,29 @@ tbody tr:hover { background: var(--color-surface-sunken); }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 10px; }
+
+/* ---------------- Print (receipts) ---------------- */
+/* When printing, hide the entire app UI and show ONLY the element marked
+   #receipt-print-area — otherwise "Print receipt" prints the whole page
+   (sidebar, buttons, everything) instead of just the receipt itself. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #receipt-print-area,
+  #receipt-print-area * {
+    visibility: visible;
+  }
+  #receipt-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    box-shadow: none;
+    border: none;
+    margin: 0;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

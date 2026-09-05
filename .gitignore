@@ -4,6 +4,9 @@ venv/
 __pycache__/
 *.pyc
 
+# Generated self-signed TLS certs (regenerate per-IP via scripts/set-network.js)
+certs/
+
 # Build output
 dist/
 build/

@@ -4,6 +4,7 @@ import { useToast } from '../../context/ToastContext';
 import { formatCurrency } from '../../utils/format';
 import BarcodeScanner from '../../components/BarcodeScanner';
 import Receipt from '../../components/Receipt';
+import TransactionStatementDownload from '../../components/TransactionStatementDownload';
 
 const PAYMENT_METHODS = ['CASH', 'UPI', 'CARD'];
 
@@ -115,6 +116,10 @@ export default function OwnerPOS() {
       <div>
         <h1 style={{ fontSize: '1.8rem' }}>POS / Billing</h1>
         <p style={{ color: 'var(--color-ink-soft)', marginBottom: '1rem' }}>Scan or type a barcode to add items to the bill.</p>
+
+        <div style={{ marginBottom: '1.2rem' }}>
+          <TransactionStatementDownload />
+        </div>
 
         <div className="card" style={{ padding: '1.2rem', marginBottom: '1rem' }}>
           <div style={{ display: 'flex', gap: '0.6rem' }}>

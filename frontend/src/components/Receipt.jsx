@@ -7,7 +7,11 @@ import { formatCurrency } from '../utils/format';
  */
 export default function Receipt({ receipt, title = 'Receipt' }) {
   return (
-    <div className="card" style={{ padding: '1.4rem', marginTop: '1rem', fontFamily: 'var(--font-mono)', fontSize: '0.82rem' }}>
+    <div
+      id="receipt-print-area"
+      className="card"
+      style={{ padding: '1.4rem', marginTop: '1rem', fontFamily: 'var(--font-mono)', fontSize: '0.82rem' }}
+    >
       <div style={{ textAlign: 'center', marginBottom: '0.6rem' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 700 }}>Smart Retail</div>
         <div style={{ fontSize: '0.75rem', color: 'var(--color-ink-soft)' }}>{title}</div>
@@ -27,7 +31,7 @@ export default function Receipt({ receipt, title = 'Receipt' }) {
         <span>{formatCurrency(receipt.grand_total)}</span>
       </div>
       <div style={{ marginTop: '0.4rem' }}>Payment: {receipt.payment_method}</div>
-      <button className="btn btn-outline btn-block" style={{ marginTop: '1rem' }} onClick={() => window.print()}>
+      <button className="btn btn-outline btn-block no-print" style={{ marginTop: '1rem' }} onClick={() => window.print()}>
         🖨️ Print receipt
       </button>
     </div>

@@ -95,4 +95,66 @@ const listSales = asyncHandler(async (req, res) => {
   res.json({ sales: result.rows });
 });
 
-module.exports = { createSale, listSales };
+/** Escapes a value for safe inclusion in a CSV cell. */
+function csvCell(value) {
+  const str = value === null || value === undefined ? '' : String(value);
+  if (/[",\n]/.test(str)) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
+/**
+ * GET /api/sales/export (owner only) — downloadable CSV transaction statement.
+ * Covers every completed transaction — both POS sales and completed customer
+ * orders — since both write into the same `sales` table. Optional ?from= and
+ * ?to= (YYYY-MM-DD) narrow the date range; defaults to the last 30 days.
+ */
+const exportSalesCsv = asyncHandler(async (req, res) => {
+  const { from, to } = req.query;
+
+  const conditions = [];
+  const params = [];
+  if (from) {
+    params.push(from);
+    conditions.push(`s.created_at >= $${params.length}::date`);
+  }
+  if (to) {
+    params.push(to);
+    conditions.push(`s.created_at < ($${params.length}::date + INTERVAL '1 day')`);
+  }
+  if (!from && !to) {
+    conditions.push(`s.created_at >= NOW() - INTERVAL '30 days'`);
+  }
+  const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  const result = await query(
+    `SELECT s.id, s.created_at, s.receipt_no, p.name AS product_name, s.quantity,
+            s.total_amount, s.payment_method
+     FROM sales s JOIN products p ON p.id = s.product_id
+     ${whereClause}
+     ORDER BY s.created_at ASC`,
+    params
+  );
+
+  const header = ['Date', 'Receipt No', 'Product', 'Quantity', 'Amount (INR)', 'Payment Method'];
+  const rows = result.rows.map((r) => [
+    new Date(r.created_at).toISOString(),
+    r.receipt_no,
+    r.product_name,
+    r.quantity,
+    r.total_amount,
+    r.payment_method,
+  ]);
+  const grandTotal = result.rows.reduce((sum, r) => sum + Number(r.total_amount), 0);
+
+  const lines = [header, ...rows, [], ['', '', '', 'TOTAL', grandTotal.toFixed(2), '']];
+  const csv = lines.map((line) => line.map(csvCell).join(',')).join('\r\n');
+
+  const rangeLabel = from || to ? `${from || 'start'}_to_${to || 'now'}` : 'last-30-days';
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="sales-statement-${rangeLabel}.csv"`);
+  res.send(csv);
+});
+
+module.exports = { createSale, listSales, exportSalesCsv };

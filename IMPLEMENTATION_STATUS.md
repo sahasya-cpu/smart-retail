@@ -79,4 +79,28 @@ Last updated: build session on 2026-08-28.
 - **Shared `AddProductModal`** — the scan-or-manual-entry add-product flow is now available from
   both the **Products** page and the **Inventory** page (previously only from Products), addressing
   direct user feedback that it was missing from Inventory management.
+- **App-wide new-order notifications** — toast + sound + sidebar badge now fire from `OwnerLayout`
+  regardless of which owner page is open (previously only worked while the Orders page itself was
+  mounted, requiring a navigation to "see" a new order — the actual root cause of the reported
+  "have to refresh" bug). Notification sound rebuilt as a proper bell strike (additive synthesis
+  with inharmonic partials, sharp attack + long ring-out, struck twice) using a single
+  pre-unlocked `AudioContext` per session, since a fresh context created inside an async socket
+  callback gets silently blocked by browser autoplay policy.
+- **Payment collection on order completion** — completing a customer order (READY → COMPLETED)
+  now opens a Cash/UPI/Card selection step and returns a printable receipt, matching the POS
+  billing flow. The backend records the actual chosen payment method in `sales` instead of a
+  hardcoded default.
+- **Printable receipts scoped correctly** — a print stylesheet now ensures "Print receipt" only
+  prints the receipt itself, not the whole app UI.
+- **Transaction statement CSV export** — a date-range picker + download button on the POS/Billing
+  page exports all transactions (POS sales and completed customer orders together, since both
+  write to the same `sales` table) as a CSV with a total row.
+- **Camera stays open across POS scans** — previously closed after every single scan; now stays
+  open with a 2-second per-barcode cooldown so a whole basket can be scanned without reopening
+  the camera each time.
+- **HTTPS + network-IP tooling** (`scripts/set-network.js`, `scripts/generate-certs.js`) — since
+  browsers block camera access on any non-localhost `http://` origin, added a one-command tool
+  that generates a free self-signed certificate for a given IP and reconfigures all three
+  services to use it, enabling camera/barcode-scanning access from any device on the network,
+  not just the host machine. Falls back cleanly to plain HTTP/localhost when not needed.
 

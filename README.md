@@ -40,6 +40,7 @@ gateway — everything runs on your own machine(s).
 | Backend | Node.js, Express, PostgreSQL (`pg`), JWT, bcrypt, Socket.IO, dotenv, cors |
 | AI Service | Python, FastAPI, Uvicorn, pandas, scikit-learn, psycopg2 |
 | Database | PostgreSQL |
+| Tooling | `selfsigned` (free local HTTPS certs for network/camera access — Section 10.5) |
 
 ---
 
@@ -51,6 +52,8 @@ smart-retail/
 ├── backend/            Express API + Socket.IO server
 ├── ai-service/         FastAPI AI microservice
 ├── database/           schema.sql, seed.sql
+├── scripts/            Network/HTTPS tooling (set-network.js, generate-certs.js)
+├── certs/              Generated self-signed TLS cert (created by scripts/, gitignored)
 ├── docs/               Additional documentation
 ├── PROJECT_SPEC.md
 ├── IMPLEMENTATION_STATUS.md
@@ -204,9 +207,95 @@ both pointed at the same backend URL):
 5. Move it through `PREPARING → READY → COMPLETED` on the owner side and watch each
    update land instantly on the customer's screen.
 
-> To test across two physical computers on the same Wi-Fi, run the backend/frontend with
-> `--host 0.0.0.0` and point the second device's browser at `http://<owner-computer-IP>:5173`,
-> with the frontend's `.env` `VITE_API_URL`/`VITE_SOCKET_URL` updated to that same IP.
+> To test across two physical computers, see **Section 10.5 — Running on a Network IP
+> (Multi-Device / Presenting to Others)** below for the full setup, including HTTPS
+> (required if you need the camera/barcode scanner to work on a non-host device).
+
+---
+
+## 10.5. Running on a Network IP (Multi-Device / Presenting to Others)
+
+By default, everything runs on `localhost`, which only works on one machine. To run the
+customer interface on one laptop and the owner interface on another (e.g. presenting to
+judges), point the whole project at your host laptop's network IP instead.
+
+**Important:** browsers only allow **camera access** (for barcode scanning) on a "secure
+context" — `https://`, or `http://localhost` specifically. A plain `http://<ip>` address is
+always blocked for camera use, no matter what. There's no way around this with plain HTTP.
+If you only need the *customer* device to work (no camera there anyway), plain HTTP is fine.
+If the *owner* device also needs to scan barcodes while accessed via IP, you need HTTPS —
+covered below.
+
+### Recommended: keep it simple by using `localhost` on the owner's own device
+
+If the owner's laptop is the one running all three services (the usual setup), you don't need
+HTTPS at all — just always open the app via `http://localhost:5173` **on that laptop**
+specifically (not the IP), even while a second laptop connects via the IP. `localhost` is
+always a secure context, so the camera works there with zero extra setup. Only the customer's
+laptop needs the IP, and it never touches the camera.
+
+### If you need the camera to work on a non-localhost device too (HTTPS setup)
+
+A one-time setup script handles this — it generates a free self-signed certificate for your
+chosen IP and reconfigures all three services to use it.
+
+**One-time setup:**
+```
+cd scripts
+npm install
+```
+
+**Every time you want to switch to a network IP** (e.g. a different Wi-Fi/hotspot each demo):
+```
+cd scripts
+node set-network.js 192.168.1.50
+```
+Replace `192.168.1.50` with your actual host laptop's IP (find it via `ipconfig`). This single
+command:
+- Generates an HTTPS certificate valid for that IP (`certs/cert.pem`, `certs/key.pem`)
+- Rewrites `backend/.env` and `frontend/.env` to point at that IP over HTTPS
+- Prints the exact commands to run next
+
+**To switch back to local-only development later:**
+```
+node set-network.js localhost
+```
+
+**Then start all three services** (the script prints these exact commands too):
+```
+# Terminal 1
+cd backend
+npm start
+
+# Terminal 2
+cd ai-service
+venv\Scripts\activate
+uvicorn main:app --host 0.0.0.0 --port 8000 --ssl-keyfile ../certs/key.pem --ssl-certfile ../certs/cert.pem
+
+# Terminal 3
+cd frontend
+npm run dev -- --host 0.0.0.0
+```
+
+Open `https://<your-ip>:5173` on **every** device — owner and customer laptops alike.
+
+**One unavoidable step per device:** since the certificate is self-signed (free, not issued by
+a public certificate authority), every browser will show a **"Your connection is not
+private"** warning the first time. This is expected, not an error — click
+**Advanced → Proceed to site (unsafe)** once per device/browser. After that, the session works
+normally, camera included.
+
+**Also allow the ports through Windows Firewall** (PowerShell, run as Administrator, one-time):
+```
+New-NetFirewallRule -DisplayName "SmartRetail-5000" -Direction Inbound -LocalPort 5000 -Protocol TCP -Action Allow
+New-NetFirewallRule -DisplayName "SmartRetail-5173" -Direction Inbound -LocalPort 5173 -Protocol TCP -Action Allow
+New-NetFirewallRule -DisplayName "SmartRetail-8000" -Direction Inbound -LocalPort 8000 -Protocol TCP -Action Allow
+```
+
+**Tip:** conference/venue Wi-Fi often blocks devices from seeing each other ("client
+isolation"). If two devices can't reach each other even with the above set up correctly, turn
+on a phone mobile hotspot and connect both laptops to that instead — it's more reliable than
+fighting venue network restrictions.
 
 ---
 
@@ -214,9 +303,12 @@ both pointed at the same backend URL):
 
 1. Sign in as the owner, go to **POS / Billing**.
 2. Type a barcode (e.g. `89100000001` for Maggi Noodles) into the barcode field and press Enter,
-   or click **📷 Scan with camera** to use a webcam.
+   or click **📷 Scan with camera** to use a webcam (camera stays open across scans — see the
+   Barcode System section below).
 3. Adjust quantity, pick a payment method, click **Complete sale**.
 4. A printable receipt appears — inventory is deducted immediately and the sale is recorded.
+5. Use the **Download statement (CSV)** control at the top of this page to export a transaction
+   statement for a chosen date range — it covers both POS sales and completed customer orders.
 
 ---
 
@@ -242,7 +334,14 @@ Product recommendations appear automatically on any **Product Detail** page for 
 - **Webcam scanning**: click "📷 Scan barcode" on the POS page, Products page, or Inventory page.
   The scanner lists all cameras connected to your device and lets you pick which one to use
   (useful on laptops/phones with more than one camera). It's configured for **EAN-13** — the
-  standard retail barcode format. Uses the free, open-source `html5-qrcode` library.
+  standard retail barcode format. Uses the free, open-source `html5-qrcode` library. In POS
+  billing specifically, the camera **stays open across multiple scans** (with a 2-second
+  per-barcode cooldown to avoid double-adding) so you can scan a whole basket of items without
+  reopening the camera each time.
+- **Camera requires a secure context**: browsers only allow camera access on `https://` or
+  `http://localhost` — never plain `http://<ip>`. This only matters if you're accessing the app
+  from a network IP instead of localhost; see **Section 10.5** for the HTTPS setup needed in
+  that case.
 - **Online auto-fill when adding a product**: scanning a barcode while adding a new product
   (from either the Products page or the Inventory page) automatically looks it up against
   **Open Food Facts** — a free, open, keyless product database — and pre-fills the name and
@@ -266,6 +365,10 @@ Product recommendations appear automatically on any **Product Detail** page for 
   so concurrent requests can never push stock negative or double-count a change.
 - Every change is logged in `stock_movements` with a `movement_type` (`RESTOCK`,
   `MANUAL_ADJUSTMENT`, `SALE`, `ORDER_RESERVE`, `ORDER_RESTORE`, `CORRECTION`) for a full audit trail.
+- **Completing a customer order collects payment**: moving an order to `READY → COMPLETED`
+  opens a payment-collection step (Cash/UPI/Card), records the transaction in the same `sales`
+  table POS billing uses, and shows a printable receipt — so completed online orders and POS
+  sales both appear together in the transaction statement export (Section 11).
 
 ---
 
@@ -275,6 +378,10 @@ Product recommendations appear automatically on any **Product Detail** page for 
 - The webcam barcode scanner requires camera permission in the browser and works best in
   good lighting with a clear, non-glossy barcode. It's configured for EAN-13; if you need to
   scan other formats, adjust the `formats` prop passed to `BarcodeScanner`.
+- Camera access requires HTTPS when accessed via a network IP (browsers block it on plain
+  `http://<ip>`). The bundled HTTPS setup (Section 10.5) uses a free self-signed certificate,
+  which means every device will show a one-time "not secure" browser warning to click through —
+  this is expected for self-signed certs, not a bug, and doesn't affect functionality afterward.
 - The online barcode lookup (Open Food Facts) has strongest coverage for packaged grocery/FMCG
   products — not every barcode will have a match, especially store-specific or regional products.
   When there's no match, the barcode is still captured and you fill in the rest by hand.
