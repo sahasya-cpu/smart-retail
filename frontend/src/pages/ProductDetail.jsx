@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { api, aiApi, getErrorMessage } from '../services/api';
 import { useCart } from '../context/CartContext';
 import { formatCurrency } from '../utils/format';
 import { Spinner, ErrorState } from '../components/Feedback';
 
 export default function ProductDetail() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
@@ -47,14 +49,14 @@ export default function ProductDetail() {
   }
 
   const recGroups = [
-    { key: 'frequently_bought_together', title: 'Frequently bought together' },
-    { key: 'similar_products', title: 'Similar products' },
-    { key: 'alternative_products', title: 'You might also like' },
+    { key: 'frequently_bought_together', title: t('products.frequentlyBoughtTogether') },
+    { key: 'similar_products', title: t('products.similarProducts') },
+    { key: 'alternative_products', title: t('products.youMightAlsoLike') },
   ];
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '1.8rem 1.5rem' }}>
-      <Link to="/products" style={{ color: 'var(--color-ink-soft)', fontSize: '0.85rem' }}>← Back to products</Link>
+      <Link to="/products" style={{ color: 'var(--color-ink-soft)', fontSize: '0.85rem' }}>{t('products.backToProducts')}</Link>
 
       <div className="card" style={{ padding: '2rem', marginTop: '1rem', display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
         <div
@@ -79,17 +81,24 @@ export default function ProductDetail() {
           <h1 style={{ margin: '0.3rem 0' }}>{product.name}</h1>
           <p style={{ color: 'var(--color-ink-soft)' }}>{product.description}</p>
           <div style={{ fontSize: '0.8rem', color: 'var(--color-ink-soft)', marginBottom: '0.8rem' }}>
-            Barcode: <code>{product.barcode || '—'}</code>
+            {t('products.barcode')}: <code>{product.barcode || '—'}</code>
           </div>
+          {product.expiry_date && (
+            <div style={{ fontSize: '0.8rem', color: 'var(--color-ink-soft)', marginBottom: '0.8rem' }}>
+              {t('products.bestBefore', {
+                date: new Date(product.expiry_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+              })}
+            </div>
+          )}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.2rem' }}>
             <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.8rem' }}>
               {formatCurrency(product.price)}
             </span>
             {outOfStock ? (
-              <span className="badge badge-rejected">Out of stock</span>
+              <span className="badge badge-rejected">{t('products.outOfStock')}</span>
             ) : (
-              <span className="badge badge-accepted">{product.stock} in stock</span>
+              <span className="badge badge-accepted">{t('products.inStock', { count: product.stock })}</span>
             )}
           </div>
 
@@ -104,7 +113,7 @@ export default function ProductDetail() {
                 value={quantity}
                 onChange={(e) => setQuantity(Math.max(1, Math.min(product.stock, Number(e.target.value))))}
               />
-              <button className="btn btn-accent" onClick={handleAdd}>Add to cart</button>
+              <button className="btn btn-accent" onClick={handleAdd}>{t('products.addToCart')}</button>
             </div>
           )}
         </div>
@@ -112,7 +121,7 @@ export default function ProductDetail() {
 
       {recs && recGroups.some((g) => recs[g.key]?.length > 0) && (
         <div style={{ marginTop: '2rem' }}>
-          <h2 style={{ fontSize: '1.2rem' }}>Recommended for you</h2>
+          <h2 style={{ fontSize: '1.2rem' }}>{t('products.recommendedForYou')}</h2>
           {recGroups.map(
             (g) =>
               recs[g.key]?.length > 0 && (

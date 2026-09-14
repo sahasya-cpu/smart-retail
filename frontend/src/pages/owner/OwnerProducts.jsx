@@ -42,6 +42,8 @@ export default function OwnerProducts() {
       description: product.description || '',
       price: product.price,
       category_id: product.category_id || '',
+      // Postgres DATE comes back as a full ISO timestamp; <input type="date"> needs just YYYY-MM-DD.
+      expiry_date: product.expiry_date ? product.expiry_date.slice(0, 10) : '',
     });
   }
 
@@ -55,6 +57,7 @@ export default function OwnerProducts() {
         description: editingProduct.description,
         price: Number(editingProduct.price),
         category_id: editingProduct.category_id || null,
+        expiry_date: editingProduct.expiry_date || null,
       });
       toast.success('Product updated.');
       setEditingProduct(null);
@@ -98,7 +101,7 @@ export default function OwnerProducts() {
           <table>
             <thead>
               <tr>
-                <th>Name</th><th>Barcode</th><th>Category</th><th>Price</th><th>Stock</th><th></th>
+                <th>Name</th><th>Barcode</th><th>Category</th><th>Price</th><th>Stock</th><th>Expiry</th><th></th>
               </tr>
             </thead>
             <tbody>
@@ -109,6 +112,7 @@ export default function OwnerProducts() {
                   <td>{p.category_name || '—'}</td>
                   <td>{formatCurrency(p.price)}</td>
                   <td>{p.stock}</td>
+                  <td><ExpiryBadge expiryDate={p.expiry_date} /></td>
                   <td style={{ display: 'flex', gap: '0.4rem' }}>
                     <button className="btn btn-outline btn-sm" onClick={() => openEdit(p)}>Edit</button>
                     <button className="btn btn-outline btn-sm" onClick={() => handleDelete(p)}>Deactivate</button>
@@ -161,6 +165,10 @@ export default function OwnerProducts() {
                 </select>
               </div>
             </div>
+            <div className="form-group">
+              <label className="label">Expiry date <span style={{ fontWeight: 400, color: 'var(--color-ink-soft)' }}>(optional)</span></label>
+              <input className="input" type="date" value={editingProduct.expiry_date} onChange={(e) => setEditingProduct({ ...editingProduct, expiry_date: e.target.value })} />
+            </div>
 
             <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.6rem' }}>
               <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={() => setEditingProduct(null)}>Cancel</button>
@@ -171,4 +179,26 @@ export default function OwnerProducts() {
       )}
     </div>
   );
+}
+
+/**
+ * Small colored badge showing how urgent a product's expiry is — reused by
+ * the products table here. Products with no expiry_date (most non-perishable
+ * goods) simply show a dash, no badge.
+ */
+function ExpiryBadge({ expiryDate }) {
+  if (!expiryDate) return <span style={{ color: 'var(--color-ink-soft)' }}>—</span>;
+
+  const today = new Date(new Date().toDateString());
+  const expiry = new Date(expiryDate);
+  const daysLeft = Math.round((expiry - today) / (1000 * 60 * 60 * 24));
+  const dateLabel = expiry.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  if (daysLeft < 0) {
+    return <span className="badge badge-rejected">Expired · {dateLabel}</span>;
+  }
+  if (daysLeft <= 7) {
+    return <span className="badge badge-pending">{daysLeft === 0 ? 'Expires today' : `${daysLeft}d left`} · {dateLabel}</span>;
+  }
+  return <span style={{ fontSize: '0.85rem', color: 'var(--color-ink-soft)' }}>{dateLabel}</span>;
 }

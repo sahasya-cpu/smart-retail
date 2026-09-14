@@ -46,12 +46,14 @@ CREATE TABLE products (
     price NUMERIC(10, 2) NOT NULL CHECK (price >= 0),
     category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    expiry_date DATE, -- nullable: not every product (e.g. stationery) expires
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX idx_products_barcode ON products(barcode);
 CREATE INDEX idx_products_category ON products(category_id);
 CREATE INDEX idx_products_name ON products USING gin (to_tsvector('english', name));
+CREATE INDEX idx_products_expiry ON products(expiry_date) WHERE expiry_date IS NOT NULL;
 
 -- ------------------------------------------------------------
 -- INVENTORY (one row per product)

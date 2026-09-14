@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api, getErrorMessage } from '../services/api';
 import { useCart } from '../context/CartContext';
 import ProductCard from '../components/ProductCard';
 import { EmptyState, ErrorState, SkeletonRows } from '../components/Feedback';
 
 export default function Products() {
+  const { t } = useTranslation();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [search, setSearch] = useState('');
@@ -53,20 +55,20 @@ export default function Products() {
   return (
     <div style={{ maxWidth: 1180, margin: '0 auto', padding: '1.8rem 1.5rem' }}>
       <div style={{ marginBottom: '1.5rem' }}>
-        <h1 style={{ fontSize: '1.8rem' }}>Browse products</h1>
-        <p style={{ color: 'var(--color-ink-soft)' }}>Fresh stock, updated in real time as the owner manages inventory.</p>
+        <h1 style={{ fontSize: '1.8rem' }}>{t('products.title')}</h1>
+        <p style={{ color: 'var(--color-ink-soft)' }}>{t('products.subtitle')}</p>
       </div>
 
       <div style={{ display: 'flex', gap: '0.8rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
         <input
           className="input"
-          placeholder="Search products or scan a barcode…"
+          placeholder={t('products.searchPlaceholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{ maxWidth: 320 }}
         />
         <select className="select" value={category} onChange={(e) => setCategory(e.target.value)} style={{ maxWidth: 220 }}>
-          <option value="">All categories</option>
+          <option value="">{t('products.allCategories')}</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
@@ -76,7 +78,7 @@ export default function Products() {
       {status === 'loading' && <SkeletonRows count={6} height={180} />}
       {status === 'error' && <ErrorState message={errorMsg} onRetry={() => setSearch((s) => s)} />}
       {status === 'ready' && products.length === 0 && (
-        <EmptyState icon="🔍" title="No products found" message="Try a different search term or category." />
+        <EmptyState icon="🔍" title={t('products.noProductsFound')} message={t('products.tryDifferent')} />
       )}
       {status === 'ready' && products.length > 0 && (
         <div

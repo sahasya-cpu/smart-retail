@@ -1,20 +1,23 @@
 import { NavLink, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
-
-const NAV_ITEMS = [
-  { to: '/owner/dashboard', label: 'Dashboard', icon: '📊' },
-  { to: '/owner/orders', label: 'Orders', icon: '🔔' },
-  { to: '/owner/pos', label: 'POS / Billing', icon: '🧾' },
-  { to: '/owner/products', label: 'Products', icon: '📦' },
-  { to: '/owner/inventory', label: 'Inventory', icon: '📥' },
-  { to: '/owner/analytics', label: 'AI Insights', icon: '🤖' },
-];
+import LanguageSwitcher from './LanguageSwitcher';
 
 export default function OwnerSidebar({ pendingCount = 0 }) {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const { connected } = useSocket();
   const navigate = useNavigate();
+
+  const NAV_ITEMS = [
+    { to: '/owner/dashboard', label: t('owner.sidebar.dashboard'), icon: '📊' },
+    { to: '/owner/orders', label: t('owner.sidebar.orders'), icon: '🔔' },
+    { to: '/owner/pos', label: t('owner.sidebar.pos'), icon: '🧾' },
+    { to: '/owner/products', label: t('owner.sidebar.products'), icon: '📦' },
+    { to: '/owner/inventory', label: t('owner.sidebar.inventory'), icon: '📥' },
+    { to: '/owner/analytics', label: t('owner.sidebar.analytics'), icon: '🤖' },
+  ];
 
   return (
     <aside
@@ -32,9 +35,13 @@ export default function OwnerSidebar({ pendingCount = 0 }) {
     >
       <div style={{ padding: '1.4rem 1.3rem 1rem' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', fontWeight: 700 }}>
-          Smart Retail
+          {t('nav.brand')}
         </div>
-        <div style={{ fontSize: '0.75rem', opacity: 0.7, marginTop: '0.15rem' }}>Owner Console</div>
+        <div style={{ fontSize: '0.75rem', opacity: 0.7, marginTop: '0.15rem' }}>{t('owner.sidebar.console')}</div>
+      </div>
+
+      <div style={{ margin: '0 1.3rem 0.8rem' }}>
+        <LanguageSwitcher dark style={{ width: '100%' }} />
       </div>
 
       <div
@@ -55,7 +62,7 @@ export default function OwnerSidebar({ pendingCount = 0 }) {
             background: connected ? '#5FD98A' : '#8A968D',
           }}
         />
-        {connected ? 'Live order feed connected' : 'Connecting…'}
+        {connected ? t('owner.sidebar.liveConnected') : t('owner.sidebar.connecting')}
       </div>
 
       <nav style={{ flex: 1, padding: '0 0.7rem' }}>
@@ -112,7 +119,7 @@ export default function OwnerSidebar({ pendingCount = 0 }) {
             navigate('/owner/login');
           }}
         >
-          Sign out
+          {t('common.signOut')}
         </button>
       </div>
     </aside>

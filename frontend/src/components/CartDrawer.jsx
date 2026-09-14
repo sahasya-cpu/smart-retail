@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useCart } from '../context/CartContext';
 import { formatCurrency } from '../utils/format';
 
 export default function CartDrawer() {
+  const { t } = useTranslation();
   const { items, isDrawerOpen, closeDrawer, setQuantity, removeItem, subtotal, itemCount } = useCart();
   const navigate = useNavigate();
 
@@ -64,7 +66,7 @@ export default function CartDrawer() {
           }}
         >
           <h2 style={{ fontSize: '1.15rem', margin: 0 }}>
-            Your cart {itemCount > 0 && <span style={{ color: 'var(--color-ink-soft)', fontWeight: 400 }}>({itemCount})</span>}
+            {t('cart.title')} {itemCount > 0 && <span style={{ color: 'var(--color-ink-soft)', fontWeight: 400 }}>({itemCount})</span>}
           </h2>
           <button
             onClick={closeDrawer}
@@ -80,7 +82,7 @@ export default function CartDrawer() {
           {items.length === 0 ? (
             <div style={{ textAlign: 'center', color: 'var(--color-ink-soft)', padding: '3rem 1rem' }}>
               <div style={{ fontSize: '2.2rem', marginBottom: '0.5rem' }}>🛒</div>
-              Your cart is empty.
+              {t('cart.empty')}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -118,7 +120,7 @@ export default function CartDrawer() {
         {items.length > 0 && (
           <div style={{ padding: '1.2rem 1.4rem', borderTop: '1px solid var(--color-border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.9rem', fontWeight: 700, fontSize: '1.1rem' }}>
-              <span>Subtotal</span>
+              <span>{t('cart.subtotal')}</span>
               <span>{formatCurrency(subtotal)}</span>
             </div>
             <button
@@ -129,10 +131,10 @@ export default function CartDrawer() {
                 navigate('/cart');
               }}
             >
-              View cart & checkout
+              {t('cart.viewCartCheckout')}
             </button>
             <button className="btn btn-outline btn-block" onClick={closeDrawer}>
-              Continue shopping
+              {t('cart.continueShopping')}
             </button>
           </div>
         )}

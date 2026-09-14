@@ -34,6 +34,9 @@ const createSale = asyncHandler(async (req, res) => {
       const productResult = await client.query('SELECT * FROM products WHERE id = $1', [product_id]);
       if (productResult.rows.length === 0) throw new ApiError(404, `Product ${product_id} not found.`);
       const product = productResult.rows[0];
+      if (product.expiry_date && new Date(product.expiry_date) < new Date(new Date().toDateString())) {
+        throw new ApiError(400, `"${product.name}" has expired and cannot be sold. Remove it from stock instead.`);
+      }
 
       const invResult = await client.query('SELECT * FROM inventory WHERE product_id = $1 FOR UPDATE', [product_id]);
       const inv = invResult.rows[0];

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useCart } from '../context/CartContext';
 import { api, getErrorMessage } from '../services/api';
 import { useToast } from '../context/ToastContext';
@@ -7,6 +8,7 @@ import { formatCurrency } from '../utils/format';
 import { EmptyState } from '../components/Feedback';
 
 export default function Cart() {
+  const { t } = useTranslation();
   const { items, setQuantity, removeItem, subtotal, clearCart } = useCart();
   const [placing, setPlacing] = useState(false);
   const toast = useToast();
@@ -32,11 +34,11 @@ export default function Cart() {
       <div style={{ maxWidth: 700, margin: '0 auto', padding: '3rem 1.5rem' }}>
         <EmptyState
           icon="🛒"
-          title="Your cart is empty"
-          message="Add a few products to get started."
+          title={t('cart.empty')}
+          message={t('cart.emptySubtitle')}
           action={
             <Link to="/products" className="btn btn-primary" style={{ marginTop: '1rem' }}>
-              Browse products
+              {t('cart.browseProducts')}
             </Link>
           }
         />
@@ -46,17 +48,17 @@ export default function Cart() {
 
   return (
     <div style={{ maxWidth: 760, margin: '0 auto', padding: '1.8rem 1.5rem' }}>
-      <h1 style={{ fontSize: '1.8rem' }}>Your cart</h1>
+      <h1 style={{ fontSize: '1.8rem' }}>{t('cart.title')}</h1>
 
       <div className="card" style={{ marginTop: '1rem' }}>
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Product</th>
-                <th>Price</th>
-                <th>Quantity</th>
-                <th>Subtotal</th>
+                <th>{t('cart.product')}</th>
+                <th>{t('cart.price')}</th>
+                <th>{t('cart.quantity')}</th>
+                <th>{t('cart.subtotal')}</th>
                 <th></th>
               </tr>
             </thead>
@@ -80,7 +82,7 @@ export default function Cart() {
                   </td>
                   <td>{formatCurrency(item.price * item.quantity)}</td>
                   <td>
-                    <button className="btn btn-outline btn-sm" onClick={() => removeItem(item.product_id)}>Remove</button>
+                    <button className="btn btn-outline btn-sm" onClick={() => removeItem(item.product_id)}>{t('cart.remove')}</button>
                   </td>
                 </tr>
               ))}
@@ -94,15 +96,15 @@ export default function Cart() {
         style={{ marginTop: '1rem', padding: '1.2rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
       >
         <div>
-          <div style={{ fontSize: '0.85rem', color: 'var(--color-ink-soft)' }}>Total</div>
+          <div style={{ fontSize: '0.85rem', color: 'var(--color-ink-soft)' }}>{t('cart.total')}</div>
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.6rem' }}>{formatCurrency(subtotal)}</div>
         </div>
         <button className="btn btn-primary" onClick={handlePlaceOrder} disabled={placing}>
-          {placing ? 'Placing order…' : 'Place order'}
+          {placing ? t('cart.placingOrder') : t('cart.placeOrder')}
         </button>
       </div>
       <p style={{ marginTop: '0.8rem', fontSize: '0.82rem', color: 'var(--color-ink-soft)' }}>
-        Stock is checked at checkout. The store owner will be notified instantly and you'll see live status updates on the Orders page.
+        {t('cart.checkoutNote')}
       </p>
     </div>
   );

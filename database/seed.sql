@@ -614,6 +614,17 @@ INSERT INTO sales (product_id, quantity, total_amount, payment_method, receipt_n
 -- STOCK_MOVEMENTS for historical sales
 -- (Represented in SALES table; SALE-type stock movements omitted for brevity in seed to keep inventory numbers stable for demo)
 
+-- EXPIRY DATES for perishable products — spread across the risk spectrum so the
+-- expiry-alert system has something meaningful to show immediately after seeding:
+-- one already-expired item, two expiring within days, one within a week, and two
+-- safely fresh for a while (should NOT trigger any alert).
+UPDATE products SET expiry_date = CURRENT_DATE - INTERVAL '2 days'  WHERE name = 'Curd 400g';           -- already expired
+UPDATE products SET expiry_date = CURRENT_DATE + INTERVAL '1 day'   WHERE name = 'Chocolate Cake Slice'; -- expiring tomorrow
+UPDATE products SET expiry_date = CURRENT_DATE + INTERVAL '2 days'  WHERE name = 'Amul Milk 1L';         -- expiring very soon
+UPDATE products SET expiry_date = CURRENT_DATE + INTERVAL '5 days'  WHERE name = 'Whole Wheat Bread';    -- expiring within a week
+UPDATE products SET expiry_date = CURRENT_DATE + INTERVAL '45 days' WHERE name = 'Amul Butter 100g';     -- safely fresh
+UPDATE products SET expiry_date = CURRENT_DATE + INTERVAL '90 days' WHERE name = 'Amul Cheese Slices';   -- safely fresh
+
 -- ORDERS
 INSERT INTO orders (customer_id, status, total_amount, stock_reserved, created_at) VALUES
 (2, 'COMPLETED', 685.0, TRUE, '2026-08-16T10:26:53.658804'),

@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../utils/format';
 
 export default function ProductCard({ product, onAddToCart }) {
+  const { t } = useTranslation();
   const outOfStock = product.stock <= 0;
 
   return (
@@ -19,12 +21,12 @@ export default function ProductCard({ product, onAddToCart }) {
             borderRadius: 6,
           }}
         >
-          {product.category_name || 'General'}
+          {product.category_name || t('products.general')}
         </span>
         {outOfStock ? (
-          <span className="badge badge-rejected">Out of stock</span>
+          <span className="badge badge-rejected">{t('products.outOfStock')}</span>
         ) : product.stock <= 10 ? (
-          <span className="badge badge-pending">Only {product.stock} left</span>
+          <span className="badge badge-pending">{t('products.onlyLeft', { count: product.stock })}</span>
         ) : null}
       </div>
 
@@ -34,6 +36,13 @@ export default function ProductCard({ product, onAddToCart }) {
       {product.description && (
         <p style={{ fontSize: '0.82rem', color: 'var(--color-ink-soft)', flex: 1, marginBottom: '0.4rem' }}>
           {product.description.length > 70 ? product.description.slice(0, 70) + '…' : product.description}
+        </p>
+      )}
+      {product.expiry_date && (
+        <p style={{ fontSize: '0.75rem', color: 'var(--color-ink-soft)', margin: 0 }}>
+          {t('products.bestBefore', {
+            date: new Date(product.expiry_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+          })}
         </p>
       )}
 
@@ -46,7 +55,7 @@ export default function ProductCard({ product, onAddToCart }) {
           disabled={outOfStock}
           onClick={() => onAddToCart(product)}
         >
-          Add to cart
+          {t('products.addToCart')}
         </button>
       </div>
     </div>

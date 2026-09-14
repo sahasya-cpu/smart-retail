@@ -7,7 +7,7 @@ const { asyncHandler, ApiError } = require('../middleware/errorHandler');
  */
 const listProducts = asyncHandler(async (req, res) => {
   const { search, category, page = 1, limit = 50 } = req.query;
-  const conditions = ['p.is_active = TRUE'];
+  const conditions = ['p.is_active = TRUE', '(p.expiry_date IS NULL OR p.expiry_date >= CURRENT_DATE)'];
   const params = [];
 
   if (search) {
@@ -74,7 +74,7 @@ const getProductByBarcode = asyncHandler(async (req, res) => {
  * POST /api/products (owner only)
  */
 const createProduct = asyncHandler(async (req, res) => {
-  const { name, barcode, description, price, category_id, initial_stock = 0, low_stock_threshold = 10 } = req.body;
+  const { name, barcode, description, price, category_id, initial_stock = 0, low_stock_threshold = 10, expiry_date } = req.body;
 
   if (price < 0) throw new ApiError(400, 'Price cannot be negative.');
 
@@ -83,9 +83,9 @@ const createProduct = asyncHandler(async (req, res) => {
     await client.query('BEGIN');
 
     const productResult = await client.query(
-      `INSERT INTO products (name, barcode, description, price, category_id)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [name, barcode || null, description || null, price, category_id || null]
+      `INSERT INTO products (name, barcode, description, price, category_id, expiry_date)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [name, barcode || null, description || null, price, category_id || null, expiry_date || null]
     );
     const product = productResult.rows[0];
 
@@ -116,7 +116,7 @@ const createProduct = asyncHandler(async (req, res) => {
  * PUT /api/products/:id (owner only)
  */
 const updateProduct = asyncHandler(async (req, res) => {
-  const { name, barcode, description, price, category_id, is_active } = req.body;
+  const { name, barcode, description, price, category_id, is_active, expiry_date } = req.body;
 
   const existing = await query('SELECT * FROM products WHERE id = $1', [req.params.id]);
   if (existing.rows.length === 0) throw new ApiError(404, 'Product not found.');
@@ -124,8 +124,8 @@ const updateProduct = asyncHandler(async (req, res) => {
   const current = existing.rows[0];
   const result = await query(
     `UPDATE products
-     SET name = $1, barcode = $2, description = $3, price = $4, category_id = $5, is_active = $6
-     WHERE id = $7 RETURNING *`,
+     SET name = $1, barcode = $2, description = $3, price = $4, category_id = $5, is_active = $6, expiry_date = $7
+     WHERE id = $8 RETURNING *`,
     [
       name ?? current.name,
       barcode ?? current.barcode,
@@ -133,10 +133,38 @@ const updateProduct = asyncHandler(async (req, res) => {
       price ?? current.price,
       category_id ?? current.category_id,
       is_active ?? current.is_active,
+      // Explicit null clears an expiry date; undefined (field omitted) keeps the existing one.
+      expiry_date !== undefined ? expiry_date : current.expiry_date,
       req.params.id,
     ]
   );
   res.json({ product: result.rows[0] });
+});
+
+/**
+ * GET /api/products/expiring (owner only)
+ * Optional ?days= (default 7) — products expiring within that window,
+ * plus anything already expired, ordered soonest-first.
+ */
+const listExpiringProducts = asyncHandler(async (req, res) => {
+  const { days = 7 } = req.query;
+  const windowDays = Number(days);
+  if (!Number.isInteger(windowDays) || windowDays < 0) {
+    throw new ApiError(400, 'days must be a non-negative integer.');
+  }
+
+  const result = await query(
+    `SELECT p.id, p.name, p.barcode, p.expiry_date, COALESCE(i.quantity, 0) AS stock,
+            (p.expiry_date < CURRENT_DATE) AS is_expired
+     FROM products p
+     LEFT JOIN inventory i ON i.product_id = p.id
+     WHERE p.is_active = TRUE
+       AND p.expiry_date IS NOT NULL
+       AND p.expiry_date <= CURRENT_DATE + ($1 || ' days')::INTERVAL
+     ORDER BY p.expiry_date ASC`,
+    [windowDays]
+  );
+  res.json({ expiringProducts: result.rows });
 });
 
 /**
@@ -178,4 +206,5 @@ module.exports = {
   deleteProduct,
   listCategories,
   createCategory,
+  listExpiringProducts,
 };

@@ -12,6 +12,7 @@ const summary = asyncHandler(async (req, res) => {
     totalOrdersResult,
     pendingOrdersResult,
     lowStockResult,
+    expiringResult,
     bestSellersResult,
     slowMoversResult,
     recentOrdersResult,
@@ -26,6 +27,16 @@ const summary = asyncHandler(async (req, res) => {
        FROM inventory i JOIN products p ON p.id = i.product_id
        WHERE i.quantity <= i.low_stock_threshold AND p.is_active = TRUE
        ORDER BY i.quantity ASC LIMIT 10`
+    ),
+    query(
+      `SELECT p.id, p.name, p.expiry_date, COALESCE(i.quantity, 0) AS stock,
+              (p.expiry_date < CURRENT_DATE) AS is_expired
+       FROM products p
+       LEFT JOIN inventory i ON i.product_id = p.id
+       WHERE p.is_active = TRUE
+         AND p.expiry_date IS NOT NULL
+         AND p.expiry_date <= CURRENT_DATE + INTERVAL '7 days'
+       ORDER BY p.expiry_date ASC LIMIT 10`
     ),
     query(
       `SELECT p.id, p.name, SUM(s.quantity) AS units_sold, SUM(s.total_amount) AS revenue
@@ -62,6 +73,7 @@ const summary = asyncHandler(async (req, res) => {
     totalOrders: Number(totalOrdersResult.rows[0].total),
     pendingOrders: Number(pendingOrdersResult.rows[0].total),
     lowStock: lowStockResult.rows,
+    expiringProducts: expiringResult.rows,
     bestSellers: bestSellersResult.rows,
     slowMovers: slowMoversResult.rows,
     recentOrders: recentOrdersResult.rows,

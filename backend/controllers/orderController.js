@@ -41,7 +41,7 @@ const createOrder = asyncHandler(async (req, res) => {
       }
 
       const productResult = await client.query(
-        `SELECT p.id, p.name, p.price, p.is_active, COALESCE(i.quantity, 0) AS stock
+        `SELECT p.id, p.name, p.price, p.is_active, p.expiry_date, COALESCE(i.quantity, 0) AS stock
          FROM products p LEFT JOIN inventory i ON i.product_id = p.id
          WHERE p.id = $1 FOR UPDATE OF p`,
         [product_id]
@@ -50,6 +50,9 @@ const createOrder = asyncHandler(async (req, res) => {
         throw new ApiError(404, `Product ${product_id} is not available.`);
       }
       const product = productResult.rows[0];
+      if (product.expiry_date && new Date(product.expiry_date) < new Date(new Date().toDateString())) {
+        throw new ApiError(400, `"${product.name}" has expired and cannot be ordered.`);
+      }
       if (product.stock < quantity) {
         throw new ApiError(400, `Insufficient stock for "${product.name}". Available: ${product.stock}.`);
       }

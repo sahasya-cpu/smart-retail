@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 export default function Login({ role = 'customer' }) {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
@@ -40,10 +43,13 @@ export default function Login({ role = 'customer' }) {
   }
 
   return (
-    <AuthLayout title={isOwner ? 'Owner sign-in' : 'Welcome back'} subtitle={isOwner ? 'Manage your store' : 'Sign in to keep shopping'}>
+    <AuthLayout
+      title={isOwner ? t('auth.ownerSignIn') : t('auth.welcomeBack')}
+      subtitle={isOwner ? t('auth.ownerSignInSubtitle') : t('auth.signInSubtitle')}
+    >
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label className="label" htmlFor="email">Email</label>
+          <label className="label" htmlFor="email">{t('auth.email')}</label>
           <input
             id="email"
             className="input"
@@ -55,7 +61,7 @@ export default function Login({ role = 'customer' }) {
           />
         </div>
         <div className="form-group">
-          <label className="label" htmlFor="password">Password</label>
+          <label className="label" htmlFor="password">{t('auth.password')}</label>
           <input
             id="password"
             className="input"
@@ -67,24 +73,24 @@ export default function Login({ role = 'customer' }) {
           />
         </div>
         <button className="btn btn-primary btn-block" type="submit" disabled={submitting}>
-          {submitting ? 'Signing in…' : 'Sign in'}
+          {submitting ? t('auth.signingIn') : t('common.signIn')}
         </button>
       </form>
 
       <p style={{ marginTop: '1.2rem', fontSize: '0.85rem', color: 'var(--color-ink-soft)' }}>
-        Demo password for every seeded account: <code>password123</code>
+        {t('auth.demoPasswordNote')} <code>password123</code>
       </p>
 
       {!isOwner && (
         <p style={{ marginTop: '0.4rem', fontSize: '0.88rem' }}>
-          New here? <Link to="/register" style={{ color: 'var(--color-primary)', fontWeight: 600 }}>Create an account</Link>
+          {t('auth.newHere')} <Link to="/register" style={{ color: 'var(--color-primary)', fontWeight: 600 }}>{t('auth.createAccount')}</Link>
         </p>
       )}
       <p style={{ marginTop: '0.4rem', fontSize: '0.82rem' }}>
         {isOwner ? (
-          <Link to="/login" style={{ color: 'var(--color-ink-soft)' }}>← Back to customer sign-in</Link>
+          <Link to="/login" style={{ color: 'var(--color-ink-soft)' }}>{t('auth.backToCustomer')}</Link>
         ) : (
-          <Link to="/owner/login" style={{ color: 'var(--color-ink-soft)' }}>Store owner? Sign in here →</Link>
+          <Link to="/owner/login" style={{ color: 'var(--color-ink-soft)' }}>{t('auth.ownerLink')}</Link>
         )}
       </p>
     </AuthLayout>
@@ -102,8 +108,12 @@ export function AuthLayout({ title, subtitle, children }) {
         padding: '2rem',
         background:
           'radial-gradient(circle at 15% 15%, var(--color-primary-soft), transparent 45%), var(--color-bg)',
+        position: 'relative',
       }}
     >
+      <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem' }}>
+        <LanguageSwitcher />
+      </div>
       <div className="card" style={{ width: '100%', maxWidth: 400, padding: '2.2rem' }}>
         <div style={{ fontSize: '1.6rem', marginBottom: '0.3rem' }}>🛒</div>
         <h1 style={{ fontSize: '1.5rem' }}>{title}</h1>

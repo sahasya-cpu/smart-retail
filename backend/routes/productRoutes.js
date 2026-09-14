@@ -7,6 +7,7 @@ const { requireFields } = require('../middleware/validate');
 // Public / any authenticated role
 router.get('/', ctrl.listProducts);
 router.get('/barcode/:barcode', ctrl.getProductByBarcode);
+router.get('/expiring', authenticate, authorize('owner'), ctrl.listExpiringProducts);
 router.get('/:id', ctrl.getProduct);
 
 // Owner-only

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api, getErrorMessage } from '../services/api';
 import { useSocketEvent } from '../context/SocketContext';
 import { useToast } from '../context/ToastContext';
@@ -8,6 +9,7 @@ import { EmptyState, ErrorState, SkeletonRows } from '../components/Feedback';
 const STATUS_STEPS = ['PENDING', 'ACCEPTED', 'PREPARING', 'READY', 'COMPLETED'];
 
 export default function Orders() {
+  const { t } = useTranslation();
   const [orders, setOrders] = useState([]);
   const [status, setStatus] = useState('loading');
   const [errorMsg, setErrorMsg] = useState('');
@@ -55,14 +57,14 @@ export default function Orders() {
   if (orders.length === 0) {
     return (
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '3rem 1.5rem' }}>
-        <EmptyState icon="📦" title="No orders yet" message="Orders you place will show up here with live status updates." />
+        <EmptyState icon="📦" title={t('orders.noOrders')} message={t('orders.noOrdersSubtitle')} />
       </div>
     );
   }
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '1.8rem 1.5rem' }}>
-      <h1 style={{ fontSize: '1.8rem' }}>Your orders</h1>
+      <h1 style={{ fontSize: '1.8rem' }}>{t('orders.title')}</h1>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
         {orders.map((order) => (
           <OrderCard key={order.id} order={order} />
@@ -73,6 +75,7 @@ export default function Orders() {
 }
 
 function OrderCard({ order }) {
+  const { t } = useTranslation();
   const isRejected = order.status === 'REJECTED';
   const currentStepIndex = STATUS_STEPS.indexOf(order.status);
 
@@ -80,7 +83,7 @@ function OrderCard({ order }) {
     <div className="card" style={{ padding: '1.3rem 1.5rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
         <div>
-          <div style={{ fontWeight: 700 }}>Order #{order.id}</div>
+          <div style={{ fontWeight: 700 }}>{t('orders.orderNumber', { id: order.id })}</div>
           <div style={{ fontSize: '0.8rem', color: 'var(--color-ink-soft)' }}>{formatDate(order.created_at)}</div>
         </div>
         <span className={statusBadgeClass(order.status)}>{order.status}</span>
@@ -115,7 +118,7 @@ function OrderCard({ order }) {
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.6rem', fontWeight: 700 }}>
-        Total: {formatCurrency(order.total_amount)}
+        {t('orders.total')}: {formatCurrency(order.total_amount)}
       </div>
     </div>
   );

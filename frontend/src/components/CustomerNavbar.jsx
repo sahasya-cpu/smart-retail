@@ -1,9 +1,12 @@
 import { NavLink, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useSocket } from '../context/SocketContext';
+import LanguageSwitcher from './LanguageSwitcher';
 
 export default function CustomerNavbar() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const { itemCount } = useCart();
   const { connected } = useSocket();
@@ -41,23 +44,24 @@ export default function CustomerNavbar() {
         <NavLink to="/products" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <span style={{ fontSize: '1.4rem' }}>🛒</span>
           <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.15rem' }}>
-            Smart Retail
+            {t('nav.brand')}
           </span>
         </NavLink>
 
         <nav style={{ display: 'flex', gap: '0.3rem', flex: 1 }}>
           <NavLink to="/products" style={linkStyle}>
-            Browse
+            {t('nav.browse')}
           </NavLink>
           <NavLink to="/orders" style={linkStyle}>
-            My orders
+            {t('nav.myOrders')}
           </NavLink>
         </nav>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <LanguageSwitcher />
+
           {user && (
             <span
-              title={connected ? 'Live updates connected' : 'Reconnecting…'}
               style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem', color: 'var(--color-ink-soft)' }}
             >
               <span
@@ -68,7 +72,7 @@ export default function CustomerNavbar() {
                   background: connected ? 'var(--color-success)' : 'var(--color-border)',
                 }}
               />
-              {connected ? 'Live' : 'Offline'}
+              {connected ? t('nav.live') : t('nav.offline')}
             </span>
           )}
 
@@ -77,7 +81,7 @@ export default function CustomerNavbar() {
             className="btn btn-outline btn-sm"
             style={{ position: 'relative' }}
           >
-            Cart
+            {t('nav.cart')}
             {itemCount > 0 && (
               <span
                 style={{
@@ -109,11 +113,11 @@ export default function CustomerNavbar() {
                 navigate('/login');
               }}
             >
-              Sign out
+              {t('common.signOut')}
             </button>
           ) : (
             <NavLink to="/login" className="btn btn-primary btn-sm">
-              Sign in
+              {t('common.signIn')}
             </NavLink>
           )}
         </div>

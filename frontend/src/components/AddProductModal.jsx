@@ -4,7 +4,7 @@ import { useToast } from '../context/ToastContext';
 import BarcodeScanner from './BarcodeScanner';
 import { lookupProductByBarcode, matchCategory } from '../services/productLookup';
 
-const emptyForm = { name: '', barcode: '', description: '', price: '', category_id: '', initial_stock: 0, low_stock_threshold: 10 };
+const emptyForm = { name: '', barcode: '', description: '', price: '', category_id: '', initial_stock: 0, low_stock_threshold: 10, expiry_date: '' };
 
 /**
  * Add-product modal shared by the Products page and the Inventory page.
@@ -62,6 +62,7 @@ export default function AddProductModal({ categories, onClose, onCreated }) {
         category_id: form.category_id || null,
         initial_stock: Number(form.initial_stock) || 0,
         low_stock_threshold: Number(form.low_stock_threshold) || 10,
+        expiry_date: form.expiry_date || null,
       });
       toast.success('Product created.');
       onCreated?.(data.product);
@@ -144,6 +145,10 @@ export default function AddProductModal({ categories, onClose, onCreated }) {
             <label className="label">Low-stock threshold</label>
             <input className="input" type="number" min="0" value={form.low_stock_threshold} onChange={(e) => setForm({ ...form, low_stock_threshold: e.target.value })} />
           </div>
+        </div>
+        <div className="form-group">
+          <label className="label">Expiry date <span style={{ fontWeight: 400, color: 'var(--color-ink-soft)' }}>(optional — leave blank for non-perishable items)</span></label>
+          <input className="input" type="date" value={form.expiry_date} onChange={(e) => setForm({ ...form, expiry_date: e.target.value })} />
         </div>
 
         <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.6rem' }}>

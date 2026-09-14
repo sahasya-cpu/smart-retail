@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   BarChart, Bar,
@@ -9,6 +10,7 @@ import { formatCurrency, statusBadgeClass } from '../../utils/format';
 import { Spinner, ErrorState, EmptyState } from '../../components/Feedback';
 
 export default function OwnerDashboard() {
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [status, setStatus] = useState('loading');
   const [errorMsg, setErrorMsg] = useState('');
@@ -29,14 +31,14 @@ export default function OwnerDashboard() {
 
   useEffect(load, []);
 
-  if (status === 'loading') return <Spinner label="Loading dashboard…" />;
+  if (status === 'loading') return <Spinner label={`${t('common.loading')}`} />;
   if (status === 'error') return <ErrorState message={errorMsg} onRetry={load} />;
 
   const kpis = [
-    { label: "Today's sales", value: formatCurrency(data.todaySales), icon: '💰' },
-    { label: 'Total revenue', value: formatCurrency(data.totalRevenue), icon: '📈' },
-    { label: 'Total orders', value: data.totalOrders, icon: '🧾' },
-    { label: 'Pending orders', value: data.pendingOrders, icon: '⏳', highlight: data.pendingOrders > 0 },
+    { label: t('owner.dashboard.todaySales'), value: formatCurrency(data.todaySales), icon: '💰' },
+    { label: t('owner.dashboard.totalRevenue'), value: formatCurrency(data.totalRevenue), icon: '📈' },
+    { label: t('owner.dashboard.totalOrders'), value: data.totalOrders, icon: '🧾' },
+    { label: t('owner.dashboard.pendingOrders'), value: data.pendingOrders, icon: '⏳', highlight: data.pendingOrders > 0 },
   ];
 
   const trend = data.revenueTrend.map((d) => ({
@@ -48,8 +50,8 @@ export default function OwnerDashboard() {
 
   return (
     <div style={{ padding: '1.8rem 2rem' }}>
-      <h1 style={{ fontSize: '1.8rem' }}>Dashboard</h1>
-      <p style={{ color: 'var(--color-ink-soft)', marginBottom: '1.5rem' }}>Your store's pulse, updated live.</p>
+      <h1 style={{ fontSize: '1.8rem' }}>{t('owner.dashboard.title')}</h1>
+      <p style={{ color: 'var(--color-ink-soft)', marginBottom: '1.5rem' }}>{t('owner.dashboard.subtitle')}</p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.8rem' }}>
         {kpis.map((k) => (
@@ -63,9 +65,9 @@ export default function OwnerDashboard() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '1.2rem', marginBottom: '1.8rem' }}>
         <div className="card" style={{ padding: '1.4rem' }}>
-          <h3 style={{ fontSize: '1rem' }}>Revenue — last 14 days</h3>
+          <h3 style={{ fontSize: '1rem' }}>{t('owner.dashboard.revenueTrend')}</h3>
           {trend.length === 0 ? (
-            <EmptyState icon="📉" title="No recent sales" message="Revenue will chart here once sales come in." />
+            <EmptyState icon="📉" title={t('owner.dashboard.noRecentSales')} message="Revenue will chart here once sales come in." />
           ) : (
             <ResponsiveContainer width="100%" height={240}>
               <LineChart data={trend}>
@@ -80,9 +82,9 @@ export default function OwnerDashboard() {
         </div>
 
         <div className="card" style={{ padding: '1.4rem' }}>
-          <h3 style={{ fontSize: '1rem' }}>Best sellers (30 days)</h3>
+          <h3 style={{ fontSize: '1rem' }}>{t('owner.dashboard.bestSellers')}</h3>
           {bestSellers.length === 0 ? (
-            <EmptyState icon="🏆" title="No sales yet" />
+            <EmptyState icon="🏆" title={t('owner.dashboard.noSalesYet')} />
           ) : (
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={bestSellers} layout="vertical" margin={{ left: 20 }}>
@@ -96,14 +98,14 @@ export default function OwnerDashboard() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.2rem' }}>
         <div className="card" style={{ padding: '1.4rem' }}>
           <h3 style={{ fontSize: '1rem', display: 'flex', justifyContent: 'space-between' }}>
-            Low stock alerts
-            <Link to="/owner/inventory" style={{ fontSize: '0.8rem', color: 'var(--color-primary)' }}>Manage →</Link>
+            {t('owner.dashboard.lowStockAlerts')}
+            <Link to="/owner/inventory" style={{ fontSize: '0.8rem', color: 'var(--color-primary)' }}>{t('owner.dashboard.manage')}</Link>
           </h3>
           {data.lowStock.length === 0 ? (
-            <p style={{ color: 'var(--color-ink-soft)', fontSize: '0.88rem' }}>All products are above their threshold.</p>
+            <p style={{ color: 'var(--color-ink-soft)', fontSize: '0.88rem' }}>{t('owner.dashboard.allAboveThreshold')}</p>
           ) : (
             data.lowStock.map((p) => (
               <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid var(--color-border)', fontSize: '0.88rem' }}>
@@ -116,11 +118,33 @@ export default function OwnerDashboard() {
 
         <div className="card" style={{ padding: '1.4rem' }}>
           <h3 style={{ fontSize: '1rem', display: 'flex', justifyContent: 'space-between' }}>
-            Recent orders
-            <Link to="/owner/orders" style={{ fontSize: '0.8rem', color: 'var(--color-primary)' }}>View all →</Link>
+            {t('owner.dashboard.expiringSoon')}
+            <Link to="/owner/products" style={{ fontSize: '0.8rem', color: 'var(--color-primary)' }}>{t('owner.dashboard.manage')}</Link>
+          </h3>
+          {data.expiringProducts.length === 0 ? (
+            <p style={{ color: 'var(--color-ink-soft)', fontSize: '0.88rem' }}>{t('owner.dashboard.nothingExpiringSoon')}</p>
+          ) : (
+            data.expiringProducts.map((p) => {
+              const daysLeft = Math.round((new Date(p.expiry_date) - new Date(new Date().toDateString())) / 86400000);
+              return (
+                <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid var(--color-border)', fontSize: '0.88rem' }}>
+                  <span>{p.name}</span>
+                  <span style={{ color: p.is_expired ? 'var(--color-danger)' : 'var(--color-warning)', fontWeight: 700 }}>
+                    {p.is_expired ? t('owner.dashboard.expired') : daysLeft === 0 ? t('owner.dashboard.expiresToday') : `${daysLeft}d`}
+                  </span>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <div className="card" style={{ padding: '1.4rem' }}>
+          <h3 style={{ fontSize: '1rem', display: 'flex', justifyContent: 'space-between' }}>
+            {t('owner.dashboard.recentOrders')}
+            <Link to="/owner/orders" style={{ fontSize: '0.8rem', color: 'var(--color-primary)' }}>{t('owner.dashboard.viewAll')}</Link>
           </h3>
           {data.recentOrders.length === 0 ? (
-            <p style={{ color: 'var(--color-ink-soft)', fontSize: '0.88rem' }}>No orders yet.</p>
+            <p style={{ color: 'var(--color-ink-soft)', fontSize: '0.88rem' }}>{t('owner.dashboard.noOrdersYet')}</p>
           ) : (
             data.recentOrders.map((o) => (
               <div key={o.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid var(--color-border)', fontSize: '0.88rem' }}>
